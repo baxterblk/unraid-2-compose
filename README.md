@@ -95,8 +95,6 @@ If you prefer not to clone the repository locally, you can build directly from t
 
 1. Create a docker-compose.yml file with the following content:
 ```yaml
-version: '3.8'
-
 services:
   unraid-to-compose:
     build:
