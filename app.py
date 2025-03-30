@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import xml.etree.ElementTree as ET
 import yaml
 import re
+import json
 
 app = Flask(__name__)
 
@@ -242,5 +243,106 @@ def convert():
     
     return jsonify({'yaml': yaml_data})
 
+@app.route('/add-autokuma-labels', methods=['POST'])
+def add_autokuma_labels():
+    try:
+        # Parse request data
+        compose_yaml = request.form.get('compose_yaml', '')
+        monitors_json = request.form.get('monitors', '[]')
+        service_name = request.form.get('service_name', '')
+        
+        if not compose_yaml:
+            return jsonify({'error': 'No docker-compose.yml data provided'})
+        
+        monitors = json.loads(monitors_json)
+        if len(monitors) == 0:
+            return jsonify({'error': 'No monitors configured'})
+        
+        # Parse YAML to Python object
+        compose = yaml.safe_load(compose_yaml)
+        
+        if not compose or 'services' not in compose or len(compose['services']) == 0:
+            return jsonify({'error': 'Invalid docker-compose.yml format or no services found'})
+        
+        # Find the target service
+        if not service_name:
+            # Use the first service if not specified
+            service_name = list(compose['services'].keys())[0]
+        elif service_name not in compose['services']:
+            return jsonify({'error': f'Service "{service_name}" not found in docker-compose.yml'})
+        
+        service = compose['services'][service_name]
+        
+        # Initialize labels if needed
+        if 'labels' not in service:
+            service['labels'] = []
+        elif isinstance(service['labels'], dict):
+            # Convert dict to list
+            service['labels'] = [f"{k}={v}" for k, v in service['labels'].items()]
+        
+        # Add AutoKuma labels for each monitor
+        for monitor in monitors:
+            if monitor['type'] == 'group':
+                # Group labels
+                service['labels'].append(f"kuma.group.name={monitor['name']}")
+                service['labels'].append(f"kuma.group.id={monitor['id']}")
+                if monitor.get('description'):
+                    service['labels'].append(f"kuma.group.description={monitor['description']}")
+            
+            elif monitor['type'] == 'docker':
+                # Docker monitor labels
+                service['labels'].append(f"kuma.monitor.type=docker")
+                service['labels'].append(f"kuma.monitor.id={monitor['id']}")
+                service['labels'].append(f"kuma.monitor.name={monitor['name']}")
+                if monitor.get('description'):
+                    service['labels'].append(f"kuma.monitor.description={monitor['description']}")
+                if monitor.get('parent'):
+                    service['labels'].append(f"kuma.monitor.parent={monitor['parent']}")
+                service['labels'].append(f"kuma.monitor.docker.host={monitor['host']}")
+                service['labels'].append(f"kuma.monitor.docker.container={monitor['container']}")
+                service['labels'].append(f"kuma.monitor.interval={monitor['interval']}")
+                service['labels'].append(f"kuma.monitor.retry.interval={monitor['retry']}")
+                service['labels'].append(f"kuma.monitor.max.retries={monitor['maxretry']}")
+            
+            elif monitor['type'] == 'http':
+                # HTTP monitor labels
+                service['labels'].append(f"kuma.monitor.type=http")
+                service['labels'].append(f"kuma.monitor.id={monitor['id']}")
+                service['labels'].append(f"kuma.monitor.name={monitor['name']}")
+                if monitor.get('description'):
+                    service['labels'].append(f"kuma.monitor.description={monitor['description']}")
+                if monitor.get('parent'):
+                    service['labels'].append(f"kuma.monitor.parent={monitor['parent']}")
+                service['labels'].append(f"kuma.monitor.http.url={monitor['url']}")
+                service['labels'].append(f"kuma.monitor.interval={monitor['interval']}")
+                service['labels'].append(f"kuma.monitor.retry.interval={monitor['retry']}")
+                service['labels'].append(f"kuma.monitor.max.retries={monitor['maxretry']}")
+                service['labels'].append(f"kuma.monitor.http.timeout={monitor['timeout']}")
+                if monitor.get('keyword'):
+                    service['labels'].append(f"kuma.monitor.http.keyword={monitor['keyword']}")
+            
+            elif monitor['type'] == 'port':
+                # Port monitor labels
+                service['labels'].append(f"kuma.monitor.type=port")
+                service['labels'].append(f"kuma.monitor.id={monitor['id']}")
+                service['labels'].append(f"kuma.monitor.name={monitor['name']}")
+                if monitor.get('description'):
+                    service['labels'].append(f"kuma.monitor.description={monitor['description']}")
+                if monitor.get('parent'):
+                    service['labels'].append(f"kuma.monitor.parent={monitor['parent']}")
+                service['labels'].append(f"kuma.monitor.port.hostname={monitor['hostname']}")
+                service['labels'].append(f"kuma.monitor.port.port={monitor['port']}")
+                service['labels'].append(f"kuma.monitor.interval={monitor['interval']}")
+                service['labels'].append(f"kuma.monitor.retry.interval={monitor['retry']}")
+                service['labels'].append(f"kuma.monitor.max.retries={monitor['maxretry']}")
+        
+        # Convert back to YAML
+        yaml_str = yaml.dump(compose, default_flow_style=False, sort_keys=False)
+        
+        return jsonify({'yaml': yaml_str})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

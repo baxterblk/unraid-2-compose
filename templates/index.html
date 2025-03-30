@@ -73,12 +73,12 @@
             margin-bottom: 20px;
             border-left: 4px solid #3498db;
         }
-        #copy-btn, #download-btn {
+        #copy-btn, #download-btn, #autokuma-copy-btn, #autokuma-download-btn {
             background-color: #2ecc71;
             margin-top: 10px;
             display: none;
         }
-        #copy-btn:hover, #download-btn:hover {
+        #copy-btn:hover, #download-btn:hover, #autokuma-copy-btn:hover, #autokuma-download-btn:hover {
             background-color: #27ae60;
         }
         .button-container {
@@ -96,38 +96,369 @@
             font-size: 0.9em;
             color: #7f8c8d;
         }
+        /* Tab styles */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            background-color: #f8f9fa;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            border-bottom-color: white;
+            margin-bottom: -1px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Form styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .monitor-form {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .monitor-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .monitor-item {
+            background-color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .monitor-controls {
+            text-align: right;
+        }
+        .monitor-controls button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            display: inline-block;
+        }
+        .add-monitor-btn {
+            padding: 5px 10px;
+            margin: 5px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .add-monitor-btn:hover {
+            background-color: #2980b9;
+        }
+        .remove-btn {
+            background-color: #e74c3c;
+        }
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
     </style>
+    <!-- Include js-yaml library for YAML parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 </head>
 <body>
     <h1>unRAID XML to Docker Compose Converter</h1>
-    
-    <div class="instructions">
-        <p>Paste your unRAID Docker container XML data on the left, then click "Convert" to generate the equivalent Docker Compose YAML on the right.</p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('xml-converter')">XML Converter</div>
+        <div class="tab" onclick="switchTab('autokuma-labels')">AutoKuma Labels</div>
     </div>
-    
-    <div class="container">
-        <div class="panel">
-            <h2>Input: unRAID XML</h2>
-            <textarea id="xml-input" placeholder="Paste your unRAID Docker XML file content here..."></textarea>
+
+    <!-- XML Converter Tab -->
+    <div id="xml-converter" class="tab-content active">
+        <div class="instructions">
+            <p>Paste your unRAID Docker container XML data on the left, then click "Convert" to generate the equivalent Docker Compose YAML on the right.</p>
         </div>
-        <div class="panel">
-            <h2>Output: Docker Compose YAML</h2>
-            <textarea id="yaml-output" placeholder="Docker Compose YAML will appear here..." readonly></textarea>
-            <div class="button-container">
-                <button id="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
-                <button id="download-btn" onclick="downloadYaml()">Download as docker-compose.yml</button>
+
+        <div class="container">
+            <div class="panel">
+                <h2>Input: unRAID XML</h2>
+                <textarea id="xml-input" placeholder="Paste your unRAID Docker XML file content here..."></textarea>
+            </div>
+            <div class="panel">
+                <h2>Output: Docker Compose YAML</h2>
+                <textarea id="yaml-output" placeholder="Docker Compose YAML will appear here..." readonly></textarea>
+                <div class="button-container">
+                    <button id="copy-btn" onclick="copyToClipboard('yaml-output', 'copy-btn')">Copy to Clipboard</button>
+                    <button id="download-btn" onclick="downloadYaml('yaml-output')">Download as docker-compose.yml</button>
+                </div>
             </div>
         </div>
+
+        <button id="convert-btn" onclick="convertXml()">Convert</button>
+        <div id="error-message" class="error"></div>
     </div>
-    
-    <button id="convert-btn" onclick="convertXml()">Convert</button>
-    <div id="error-message" class="error"></div>
-    
+
+    <!-- AutoKuma Labels Tab -->
+    <div id="autokuma-labels" class="tab-content">
+        <div class="instructions">
+            <p>Paste your existing docker-compose.yml, configure AutoKuma labels, then generate an updated compose file with monitoring labels.</p>
+        </div>
+
+        <div class="container">
+            <div class="panel">
+                <h2>Input: Docker Compose YAML</h2>
+                <textarea id="compose-input" placeholder="Paste your docker-compose.yml content here..."></textarea>
+                
+                <h3>Monitor Configuration</h3>
+                <div class="monitor-controls">
+                    <button class="add-monitor-btn" onclick="showMonitorForm('group')">+ Add Group</button>
+                    <button class="add-monitor-btn" onclick="showMonitorForm('docker')">+ Add Docker Monitor</button>
+                    <button class="add-monitor-btn" onclick="showMonitorForm('http')">+ Add HTTP Monitor</button>
+                    <button class="add-monitor-btn" onclick="showMonitorForm('port')">+ Add Port Monitor</button>
+                </div>
+                
+                <!-- Monitor Forms -->
+                <div id="monitor-form-container" class="monitor-form" style="display: none;">
+                    <!-- Group Monitor Form -->
+                    <div id="group-form" style="display: none;">
+                        <h3>Add Group Monitor</h3>
+                        <div class="form-group">
+                            <label for="group-id">Group ID:</label>
+                            <input type="text" id="group-id" placeholder="e.g., services-group">
+                        </div>
+                        <div class="form-group">
+                            <label for="group-name">Group Name:</label>
+                            <input type="text" id="group-name" placeholder="e.g., Web Services">
+                        </div>
+                        <div class="form-group">
+                            <label for="group-description">Description:</label>
+                            <input type="text" id="group-description" placeholder="e.g., Web application services">
+                        </div>
+                        <button onclick="addMonitor('group')">Add Group</button>
+                        <button onclick="hideMonitorForm()" class="remove-btn">Cancel</button>
+                    </div>
+                    
+                    <!-- Docker Monitor Form -->
+                    <div id="docker-form" style="display: none;">
+                        <h3>Add Docker Monitor</h3>
+                        <div class="form-group">
+                            <label for="docker-id">Monitor ID:</label>
+                            <input type="text" id="docker-id" placeholder="e.g., webapp-container">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-name">Monitor Name:</label>
+                            <input type="text" id="docker-name" placeholder="e.g., Web App Container">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-description">Description:</label>
+                            <input type="text" id="docker-description" placeholder="e.g., Monitors the web app container status">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-parent">Parent Group ID (optional):</label>
+                            <input type="text" id="docker-parent" placeholder="e.g., services-group">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-host">Docker Host ID:</label>
+                            <input type="number" id="docker-host" value="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-container">Container Name:</label>
+                            <input type="text" id="docker-container" placeholder="e.g., webapp">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-interval">Check Interval (seconds):</label>
+                            <input type="number" id="docker-interval" value="60" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-retry">Retry Interval (seconds):</label>
+                            <input type="number" id="docker-retry" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="docker-maxretry">Max Retries:</label>
+                            <input type="number" id="docker-maxretry" value="3" min="1">
+                        </div>
+                        <button onclick="addMonitor('docker')">Add Docker Monitor</button>
+                        <button onclick="hideMonitorForm()" class="remove-btn">Cancel</button>
+                    </div>
+                    
+                    <!-- HTTP Monitor Form -->
+                    <div id="http-form" style="display: none;">
+                        <h3>Add HTTP Monitor</h3>
+                        <div class="form-group">
+                            <label for="http-id">Monitor ID:</label>
+                            <input type="text" id="http-id" placeholder="e.g., webapp-web">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-name">Monitor Name:</label>
+                            <input type="text" id="http-name" placeholder="e.g., Web App Interface">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-description">Description:</label>
+                            <input type="text" id="http-description" placeholder="e.g., Monitors the web app interface">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-parent">Parent Group ID (optional):</label>
+                            <input type="text" id="http-parent" placeholder="e.g., services-group">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-url">URL:</label>
+                            <input type="text" id="http-url" placeholder="e.g., http://example.com:8080">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-interval">Check Interval (seconds):</label>
+                            <input type="number" id="http-interval" value="60" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-retry">Retry Interval (seconds):</label>
+                            <input type="number" id="http-retry" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-maxretry">Max Retries:</label>
+                            <input type="number" id="http-maxretry" value="3" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-timeout">Timeout (seconds):</label>
+                            <input type="number" id="http-timeout" value="10" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="http-keyword">Keyword (optional):</label>
+                            <input type="text" id="http-keyword" placeholder="e.g., Success">
+                        </div>
+                        <button onclick="addMonitor('http')">Add HTTP Monitor</button>
+                        <button onclick="hideMonitorForm()" class="remove-btn">Cancel</button>
+                    </div>
+                    
+                    <!-- Port Monitor Form -->
+                    <div id="port-form" style="display: none;">
+                        <h3>Add Port Monitor</h3>
+                        <div class="form-group">
+                            <label for="port-id">Monitor ID:</label>
+                            <input type="text" id="port-id" placeholder="e.g., db-port">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-name">Monitor Name:</label>
+                            <input type="text" id="port-name" placeholder="e.g., Database Port">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-description">Description:</label>
+                            <input type="text" id="port-description" placeholder="e.g., Monitors the database port">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-parent">Parent Group ID (optional):</label>
+                            <input type="text" id="port-parent" placeholder="e.g., database-group">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-hostname">Hostname/IP:</label>
+                            <input type="text" id="port-hostname" placeholder="e.g., localhost or 192.168.1.100">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-number">Port Number:</label>
+                            <input type="number" id="port-number" placeholder="e.g., 3306" min="1" max="65535">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-interval">Check Interval (seconds):</label>
+                            <input type="number" id="port-interval" value="60" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-retry">Retry Interval (seconds):</label>
+                            <input type="number" id="port-retry" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="port-maxretry">Max Retries:</label>
+                            <input type="number" id="port-maxretry" value="3" min="1">
+                        </div>
+                        <button onclick="addMonitor('port')">Add Port Monitor</button>
+                        <button onclick="hideMonitorForm()" class="remove-btn">Cancel</button>
+                    </div>
+                </div>
+                
+                <h3>Configured Monitors</h3>
+                <div id="monitor-list" class="monitor-list">
+                    <p>No monitors configured yet. Use the buttons above to add monitors.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="service-name">Apply labels to service:</label>
+                    <input type="text" id="service-name" placeholder="e.g., webapp (leave empty to use first service)">
+                </div>
+                
+                <button id="generate-labels-btn" onclick="addAutoKumaLabels()">Generate Compose with Labels</button>
+            </div>
+            <div class="panel">
+                <h2>Output: Docker Compose with AutoKuma Labels</h2>
+                <textarea id="autokuma-output" placeholder="Docker Compose with AutoKuma labels will appear here..." readonly></textarea>
+                <div class="button-container">
+                    <button id="autokuma-copy-btn" onclick="copyToClipboard('autokuma-output', 'autokuma-copy-btn')">Copy to Clipboard</button>
+                    <button id="autokuma-download-btn" onclick="downloadYaml('autokuma-output')">Download as docker-compose.yml</button>
+                </div>
+            </div>
+        </div>
+        <div id="autokuma-error-message" class="error"></div>
+    </div>
+
     <div class="footer">
         <p>unRAID XML to Docker Compose Converter | Open Source Tool</p>
     </div>
-    
+
     <script>
+        // Store configured monitors
+        let monitors = [];
+
+        // Tab switching functionality
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            const tabs = document.querySelectorAll('.tab');
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].textContent === (tabId === 'xml-converter' ? 'XML Converter' : 'AutoKuma Labels')) {
+                    tabs[i].classList.add('active');
+                    break;
+                }
+            }
+        }
+
+        // XML Converter functionality
         function convertXml() {
             const xmlData = document.getElementById('xml-input').value;
             const errorElement = document.getElementById('error-message');
@@ -169,13 +500,14 @@
                 downloadBtn.style.display = 'none';
             });
         }
-        
-        function copyToClipboard() {
-            const yamlOutput = document.getElementById('yaml-output');
-            yamlOutput.select();
+
+        // Copy and download functions
+        function copyToClipboard(elementId, buttonId) {
+            const textElement = document.getElementById(elementId);
+            textElement.select();
             document.execCommand('copy');
             
-            const copyBtn = document.getElementById('copy-btn');
+            const copyBtn = document.getElementById(buttonId);
             const originalText = copyBtn.textContent;
             
             copyBtn.textContent = 'Copied!';
@@ -184,8 +516,8 @@
             }, 2000);
         }
         
-        function downloadYaml() {
-            const yamlContent = document.getElementById('yaml-output').value;
+        function downloadYaml(elementId) {
+            const yamlContent = document.getElementById(elementId).value;
             if (!yamlContent) return;
             
             const blob = new Blob([yamlContent], { type: 'text/yaml' });
@@ -197,6 +529,284 @@
             a.click();
             
             URL.revokeObjectURL(url);
+        }
+
+        // Monitor form functions
+        function showMonitorForm(type) {
+            // Hide all form types
+            document.getElementById('group-form').style.display = 'none';
+            document.getElementById('docker-form').style.display = 'none';
+            document.getElementById('http-form').style.display = 'none';
+            document.getElementById('port-form').style.display = 'none';
+            
+            // Show the selected form
+            document.getElementById(`${type}-form`).style.display = 'block';
+            document.getElementById('monitor-form-container').style.display = 'block';
+        }
+
+        function hideMonitorForm() {
+            document.getElementById('monitor-form-container').style.display = 'none';
+        }
+
+        function addMonitor(type) {
+            let monitor = {
+                type: type
+            };
+            
+            // Validate required fields and collect data based on type
+            switch(type) {
+                case 'group':
+                    const groupId = document.getElementById('group-id').value.trim();
+                    const groupName = document.getElementById('group-name').value.trim();
+                    
+                    if (!groupId || !groupName) {
+                        alert('Group ID and Group Name are required');
+                        return;
+                    }
+                    
+                    monitor.id = groupId;
+                    monitor.name = groupName;
+                    monitor.description = document.getElementById('group-description').value.trim();
+                    break;
+                    
+                case 'docker':
+                    const dockerId = document.getElementById('docker-id').value.trim();
+                    const dockerName = document.getElementById('docker-name').value.trim();
+                    const dockerContainer = document.getElementById('docker-container').value.trim();
+                    
+                    if (!dockerId || !dockerName || !dockerContainer) {
+                        alert('Monitor ID, Monitor Name, and Container Name are required');
+                        return;
+                    }
+                    
+                    monitor.id = dockerId;
+                    monitor.name = dockerName;
+                    monitor.description = document.getElementById('docker-description').value.trim();
+                    monitor.parent = document.getElementById('docker-parent').value.trim();
+                    monitor.host = document.getElementById('docker-host').value;
+                    monitor.container = dockerContainer;
+                    monitor.interval = document.getElementById('docker-interval').value;
+                    monitor.retry = document.getElementById('docker-retry').value;
+                    monitor.maxretry = document.getElementById('docker-maxretry').value;
+                    break;
+                    
+                case 'http':
+                    const httpId = document.getElementById('http-id').value.trim();
+                    const httpName = document.getElementById('http-name').value.trim();
+                    const httpUrl = document.getElementById('http-url').value.trim();
+                    
+                    if (!httpId || !httpName || !httpUrl) {
+                        alert('Monitor ID, Monitor Name, and URL are required');
+                        return;
+                    }
+                    
+                    monitor.id = httpId;
+                    monitor.name = httpName;
+                    monitor.description = document.getElementById('http-description').value.trim();
+                    monitor.parent = document.getElementById('http-parent').value.trim();
+                    monitor.url = httpUrl;
+                    monitor.interval = document.getElementById('http-interval').value;
+                    monitor.retry = document.getElementById('http-retry').value;
+                    monitor.maxretry = document.getElementById('http-maxretry').value;
+                    monitor.timeout = document.getElementById('http-timeout').value;
+                    monitor.keyword = document.getElementById('http-keyword').value.trim();
+                    break;
+                    
+                case 'port':
+                    const portId = document.getElementById('port-id').value.trim();
+                    const portName = document.getElementById('port-name').value.trim();
+                    const hostname = document.getElementById('port-hostname').value.trim();
+                    const portNumber = document.getElementById('port-number').value.trim();
+                    
+                    if (!portId || !portName || !hostname || !portNumber) {
+                        alert('Monitor ID, Monitor Name, Hostname, and Port Number are required');
+                        return;
+                    }
+                    
+                    monitor.id = portId;
+                    monitor.name = portName;
+                    monitor.description = document.getElementById('port-description').value.trim();
+                    monitor.parent = document.getElementById('port-parent').value.trim();
+                    monitor.hostname = hostname;
+                    monitor.port = portNumber;
+                    monitor.interval = document.getElementById('port-interval').value;
+                    monitor.retry = document.getElementById('port-retry').value;
+                    monitor.maxretry = document.getElementById('port-maxretry').value;
+                    break;
+            }
+            
+            // Add to monitors array
+            monitors.push(monitor);
+            
+            // Update display
+            updateMonitorList();
+            
+            // Clear form fields
+            clearFormFields(type);
+            
+            // Hide the form
+            hideMonitorForm();
+        }
+
+        function clearFormFields(type) {
+            switch(type) {
+                case 'group':
+                    document.getElementById('group-id').value = '';
+                    document.getElementById('group-name').value = '';
+                    document.getElementById('group-description').value = '';
+                    break;
+                    
+                case 'docker':
+                    document.getElementById('docker-id').value = '';
+                    document.getElementById('docker-name').value = '';
+                    document.getElementById('docker-description').value = '';
+                    document.getElementById('docker-parent').value = '';
+                    document.getElementById('docker-host').value = '1';
+                    document.getElementById('docker-container').value = '';
+                    document.getElementById('docker-interval').value = '60';
+                    document.getElementById('docker-retry').value = '30';
+                    document.getElementById('docker-maxretry').value = '3';
+                    break;
+                    
+                case 'http':
+                    document.getElementById('http-id').value = '';
+                    document.getElementById('http-name').value = '';
+                    document.getElementById('http-description').value = '';
+                    document.getElementById('http-parent').value = '';
+                    document.getElementById('http-url').value = '';
+                    document.getElementById('http-interval').value = '60';
+                    document.getElementById('http-retry').value = '30';
+                    document.getElementById('http-maxretry').value = '3';
+                    document.getElementById('http-timeout').value = '10';
+                    document.getElementById('http-keyword').value = '';
+                    break;
+                    
+                case 'port':
+                    document.getElementById('port-id').value = '';
+                    document.getElementById('port-name').value = '';
+                    document.getElementById('port-description').value = '';
+                    document.getElementById('port-parent').value = '';
+                    document.getElementById('port-hostname').value = '';
+                    document.getElementById('port-number').value = '';
+                    document.getElementById('port-interval').value = '60';
+                    document.getElementById('port-retry').value = '30';
+                    document.getElementById('port-maxretry').value = '3';
+                    break;
+            }
+        }
+
+        function removeMonitor(index) {
+            monitors.splice(index, 1);
+            updateMonitorList();
+        }
+
+        function updateMonitorList() {
+            const listElement = document.getElementById('monitor-list');
+            
+            if (monitors.length === 0) {
+                listElement.innerHTML = '<p>No monitors configured yet. Use the buttons above to add monitors.</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            monitors.forEach((monitor, index) => {
+                let details = '';
+                
+                switch(monitor.type) {
+                    case 'group':
+                        details = `<strong>Group:</strong> ${monitor.name}`;
+                        if (monitor.description) {
+                            details += `<br><strong>Description:</strong> ${monitor.description}`;
+                        }
+                        break;
+                        
+                    case 'docker':
+                        details = `<strong>Docker Monitor:</strong> ${monitor.name}`;
+                        details += `<br><strong>Container:</strong> ${monitor.container}`;
+                        if (monitor.parent) {
+                            details += `<br><strong>Parent Group:</strong> ${monitor.parent
+}`;
+                        }
+                        break;
+                        
+                    case 'http':
+                        details = `<strong>HTTP Monitor:</strong> ${monitor.name}`;
+                        details += `<br><strong>URL:</strong> ${monitor.url}`;
+                        if (monitor.parent) {
+                            details += `<br><strong>Parent Group:</strong> ${monitor.parent}`;
+                        }
+                        break;
+                        
+                    case 'port':
+                        details = `<strong>Port Monitor:</strong> ${monitor.name}`;
+                        details += `<br><strong>Host:Port:</strong> ${monitor.hostname}:${monitor.port}`;
+                        if (monitor.parent) {
+                            details += `<br><strong>Parent Group:</strong> ${monitor.parent}`;
+                        }
+                        break;
+                }
+                
+                html += `
+                <div class="monitor-item">
+                    ${details}
+                    <div class="monitor-controls">
+                        <button class="remove-btn" onclick="removeMonitor(${index})">Remove</button>
+                    </div>
+                </div>`;
+            });
+            
+            listElement.innerHTML = html;
+        }
+        
+        // AutoKuma Labels functionality
+        function addAutoKumaLabels() {
+            const composeInput = document.getElementById('compose-input').value.trim();
+            const errorElement = document.getElementById('autokuma-error-message');
+            const copyBtn = document.getElementById('autokuma-copy-btn');
+            const downloadBtn = document.getElementById('autokuma-download-btn');
+            
+            if (!composeInput) {
+                errorElement.textContent = "Please paste docker-compose.yml content first";
+                return;
+            }
+            
+            if (monitors.length === 0) {
+                errorElement.textContent = "Please add at least one monitor configuration";
+                return;
+            }
+            
+            errorElement.textContent = '';
+            
+            fetch('/add-autokuma-labels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'compose_yaml': composeInput,
+                    'monitors': JSON.stringify(monitors),
+                    'service_name': document.getElementById('service-name').value.trim()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorElement.textContent = data.error;
+                    document.getElementById('autokuma-output').value = '';
+                    copyBtn.style.display = 'none';
+                    downloadBtn.style.display = 'none';
+                } else {
+                    document.getElementById('autokuma-output').value = data.yaml;
+                    copyBtn.style.display = 'block';
+                    downloadBtn.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorElement.textContent = "An error occurred while adding labels: " + error;
+                copyBtn.style.display = 'none';
+                downloadBtn.style.display = 'none';
+            });
         }
     </script>
 </body>
