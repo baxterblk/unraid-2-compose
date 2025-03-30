@@ -89,9 +89,9 @@ docker build -t unraid-to-compose .
 docker run -d -p 8080:5000 --name unraid-to-compose unraid-to-compose
 ```
 
-##### Option B: Direct Docker Deployment (No repository clone needed)
+##### Option B: Direct Docker Deployment (No local repository clone needed)
 
-If you prefer not to clone the repository, you can directly run the application using Docker:
+If you prefer not to clone the repository locally, you can build directly from the Git repository URL:
 
 1. Create a docker-compose.yml file with the following content:
 ```yaml
@@ -99,7 +99,8 @@ version: '3.8'
 
 services:
   unraid-to-compose:
-    image: registry.git.blakbox.vip/baxterblk/unraid-to-compose:latest
+    build:
+      context: https://git.blakbox.vip/baxterblk/unraid-to-compose.git
     ports:
       - "8080:5000"
     restart: unless-stopped
@@ -110,10 +111,10 @@ services:
 docker-compose up -d
 ```
 
-Alternatively, you can run it directly with Docker:
-```bash
-docker run -d -p 8080:5000 --name unraid-to-compose registry.git.blakbox.vip/baxterblk/unraid-to-compose:latest
-```
+This approach will automatically:
+1. Pull the source code from the Git repository
+2. Build the Docker image locally
+3. Start the container
 
 The application will be available at http://localhost:8080
 
