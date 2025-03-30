@@ -52,7 +52,7 @@ A web-based tool to convert unRAID Docker container XML configurations to Docker
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/unraid-to-compose.git
+git clone https://git.blakbox.vip/baxterblk/unraid-to-compose.git
 cd unraid-to-compose
 ```
 
@@ -74,7 +74,7 @@ The application can be easily deployed using Docker, which is perfect for unRAID
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/unraid-to-compose.git
+git clone https://git.blakbox.vip/baxterblk/unraid-to-compose.git
 cd unraid-to-compose
 ```
 
