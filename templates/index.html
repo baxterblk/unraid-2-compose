@@ -414,7 +414,10 @@
                     <input type="text" id="service-name" placeholder="e.g., webapp (leave empty to use first service)">
                 </div>
                 
-                <button id="generate-labels-btn" onclick="addAutoKumaLabels()">Generate Compose with Labels</button>
+                <div style="display: flex; gap: 10px; margin: 20px 0;">
+                    <button id="auto-populate-btn" onclick="autoPopulateLabels()" style="flex: 1; background-color: #f39c12;">Auto Populate Monitors</button>
+                    <button id="generate-labels-btn" onclick="addAutoKumaLabels()" style="flex: 1;">Generate Compose with Labels</button>
+                </div>
             </div>
             <div class="panel">
                 <h2>Output: Docker Compose with AutoKuma Labels</h2>
@@ -435,6 +438,163 @@
     <script>
         // Store configured monitors
         let monitors = [];
+        
+        // Auto-populate monitors from docker-compose.yml
+        function autoPopulateLabels() {
+            const composeInput = document.getElementById('compose-input').value.trim();
+            const errorElement = document.getElementById('autokuma-error-message');
+            
+            if (!composeInput) {
+                errorElement.textContent = "Please paste docker-compose.yml content first";
+                return;
+            }
+            
+            errorElement.textContent = '';
+            
+            try {
+                // Parse YAML content
+                const composeObj = jsyaml.load(composeInput);
+                
+                if (!composeObj || !composeObj.services) {
+                    errorElement.textContent = "Invalid docker-compose.yml format or no services found";
+                    return;
+                }
+                
+                // Create a services group
+                const servicesGroup = {
+                    type: 'group',
+                    id: 'services-group',
+                    name: 'Docker Services',
+                    description: 'Auto-generated group for Docker services'
+                };
+                
+                // Add group only if it doesn't exist already
+                if (!monitors.some(m => m.type === 'group' && m.id === 'services-group')) {
+                    monitors.push(servicesGroup);
+                }
+                
+                // Process each service
+                const services = composeObj.services;
+                for (const [serviceName, serviceConfig] of Object.entries(services)) {
+                    // Create a Docker monitor for each service
+                    const dockerMonitor = {
+                        type: 'docker',
+                        id: `${serviceName}-container`,
+                        name: `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)} Container`,
+                        description: `Docker container for ${serviceName}`,
+                        parent: 'services-group',
+                        host: '1',
+                        container: serviceConfig.container_name || serviceName,
+                        interval: '60',
+                        retry: '30',
+                        maxretry: '3'
+                    };
+                    
+                    // Only add if not already exists
+                    if (!monitors.some(m => m.type === 'docker' && m.container === dockerMonitor.container)) {
+                        monitors.push(dockerMonitor);
+                    }
+                    
+                    // If the service has ports, create Port monitors
+                    if (serviceConfig.ports && Array.isArray(serviceConfig.ports)) {
+                        serviceConfig.ports.forEach((portMapping, index) => {
+                            // Parse port mapping (format could be "8080:80" or "8080:80/tcp")
+                            let hostPort, containerPort;
+                            
+                            if (typeof portMapping === 'string') {
+                                const parts = portMapping.split(':');
+                                if (parts.length >= 2) {
+                                    hostPort = parts[0];
+                                    // Remove protocol if present
+                                    containerPort = parts[1].split('/')[0];
+                                }
+                            } else if (portMapping.published && portMapping.target) {
+                                // Object format: {published: 8080, target: 80}
+                                hostPort = portMapping.published;
+                                containerPort = portMapping.target;
+                            }
+                            
+                            if (hostPort && containerPort) {
+                                const portMonitor = {
+                                    type: 'port',
+                                    id: `${serviceName}-port-${containerPort}`,
+                                    name: `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)} Port ${containerPort}`,
+                                    description: `Port ${containerPort} for ${serviceName}`,
+                                    parent: 'services-group',
+                                    hostname: 'localhost',
+                                    port: hostPort,
+                                    interval: '60',
+                                    retry: '30',
+                                    maxretry: '3'
+                                };
+                                
+                                // Only add if not already exists
+                                if (!monitors.some(m => m.type === 'port' && m.port === portMonitor.port)) {
+                                    monitors.push(portMonitor);
+                                }
+                            }
+                        });
+                    }
+                    
+                    // If the service has labels that look like URLs, create HTTP monitors
+                    if (serviceConfig.labels) {
+                        let labels = serviceConfig.labels;
+                        // Handle both array and object label formats
+                        if (!Array.isArray(labels)) {
+                            labels = Object.entries(labels).map(([k, v]) => `${k}=${v}`);
+                        }
+                        
+                        labels.forEach(label => {
+                            let url;
+                            // Try to extract URLs from labels (like unraid.webui or similar)
+                            if (typeof label === 'string') {
+                                const parts = label.split('=');
+                                if (parts.length === 2 && parts[1].match(/^https?:\/\//)) {
+                                    url = parts[1];
+                                } else if (parts[0] === 'unraid.webui') {
+                                    // Handle special case for unRAID WebUI which might be a relative path
+                                    let webui = parts[1];
+                                    // If it's a port like :8080
+                                    if (webui.startsWith(':')) {
+                                        url = `http://localhost${webui}`;
+                                    } else if (!webui.match(/^https?:\/\//)) {
+                                        url = `http://${webui}`;
+                                    } else {
+                                        url = webui;
+                                    }
+                                }
+                                
+                                if (url) {
+                                    const httpMonitor = {
+                                        type: 'http',
+                                        id: `${serviceName}-web`,
+                                        name: `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)} Web Interface`,
+                                        description: `Web interface for ${serviceName}`,
+                                        parent: 'services-group',
+                                        url: url,
+                                        interval: '60',
+                                        retry: '30',
+                                        maxretry: '3',
+                                        timeout: '10'
+                                    };
+                                    
+                                    // Only add if not already exists
+                                    if (!monitors.some(m => m.type === 'http' && m.url === httpMonitor.url)) {
+                                        monitors.push(httpMonitor);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                // Update the monitor list display
+                updateMonitorList();
+                
+            } catch (error) {
+                errorElement.textContent = "Error parsing docker-compose.yml: " + error.message;
+            }
+        }
 
         // Tab switching functionality
         function switchTab(tabId) {

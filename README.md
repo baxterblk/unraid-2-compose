@@ -147,16 +147,30 @@ The application will be available at http://your-unraid-ip:8080
 
 1. Navigate to the AutoKuma Labels tab
 2. Paste your existing `docker-compose.yml` content into the input box
-3. Configure monitors by using the buttons to add different monitor types:
-   - Group monitors: Organize your monitors in logical groups
-   - Docker monitors: Monitor container state
-   - HTTP monitors: Check web endpoints
-   - Port monitors: Verify if a port is open and responding
-4. For each monitor, fill in the required fields:
-   - All monitors require an ID and Name
-   - Docker monitors require a container name
-   - HTTP monitors require a URL
-   - Port monitors require hostname and port number
+3. Choose one of the following options:
+   
+   #### Option A: Auto Populate Monitors
+   - Click the "Auto Populate Monitors" button to automatically create monitors based on your docker-compose.yml
+   - The tool will:
+     - Create a Docker Services group
+     - Add Docker monitors for each service
+     - Add Port monitors for exposed ports
+     - Create HTTP monitors for any detected web interfaces (from labels)
+   - Review and customize the generated monitors if needed
+   
+   #### Option B: Manual Configuration
+   - Configure monitors by using the buttons to add different monitor types:
+     - Group monitors: Organize your monitors in logical groups
+     - Docker monitors: Monitor container state
+     - HTTP monitors: Check web endpoints
+     - Port monitors: Verify if a port is open and responding
+   - For each monitor, fill in the required fields:
+     - All monitors require an ID and Name
+     - Docker monitors require a container name
+     - HTTP monitors require a URL
+     - Port monitors require hostname and port number
+
+4. Specify which service to apply the labels to (optional)
 5. Click "Generate Compose with Labels" to add the configured monitors to your compose file
 6. Review the generated YAML with AutoKuma labels
 7. Use the "Copy to Clipboard" or "Download as docker-compose.yml" buttons to save the result
