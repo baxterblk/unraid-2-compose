@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#111111" />
+  <circle cx="100" cy="100" r="85" fill="#222222" />
+  
+  <!-- Stylized gear/tool icon -->
+  <path d="M100 50 L120 55 L130 75 L120 95 L100 100 L80 95 L70 75 L80 55 Z" fill="#E59400" />
+  
+  <!-- Stylized arrows representing conversion -->
+  <path d="M65 120 L95 140 L95 130 L135 130 L135 110 L95 110 L95 100 Z" fill="#FF3E3E" />
+  <path d="M135 80 L105 60 L105 70 L65 70 L65 90 L105 90 L105 100 Z" fill="#E59400" />
+  
+  <!-- Small dots representing data -->
+  <circle cx="50" cy="120" r="5" fill="#E59400" />
+  <circle cx="150" cy="120" r="5" fill="#E59400" />
+  <circle cx="50" cy="80" r="5" fill="#FF3E3E" />
+  <circle cx="150" cy="80" r="5" fill="#FF3E3E" />
+  
+  <!-- Inner accent circle -->
+  <circle cx="100" cy="100" r="15" fill="#333333" stroke="#E59400" stroke-width="2" />
+</svg>
