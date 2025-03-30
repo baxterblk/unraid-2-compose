@@ -70,7 +70,7 @@ The application will be available at http://localhost:5000
 
 #### Method 2: Docker Deployment (Recommended)
 
-The application can be easily deployed using Docker, which is perfect for unRAID users:
+##### Option A: Build from repository
 
 1. Clone the repository:
 ```bash
@@ -80,13 +80,39 @@ cd unraid-to-compose
 
 2. Build and start the Docker container:
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 
 Alternatively, you can use the following commands:
 ```bash
 docker build -t unraid-to-compose .
 docker run -d -p 8080:5000 --name unraid-to-compose unraid-to-compose
+```
+
+##### Option B: Direct Docker Deployment (No repository clone needed)
+
+If you prefer not to clone the repository, you can directly run the application using Docker:
+
+1. Create a docker-compose.yml file with the following content:
+```yaml
+version: '3.8'
+
+services:
+  unraid-to-compose:
+    image: registry.git.blakbox.vip/baxterblk/unraid-to-compose:latest
+    ports:
+      - "8080:5000"
+    restart: unless-stopped
+```
+
+2. Run the container:
+```bash
+docker-compose up -d
+```
+
+Alternatively, you can run it directly with Docker:
+```bash
+docker run -d -p 8080:5000 --name unraid-to-compose registry.git.blakbox.vip/baxterblk/unraid-to-compose:latest
 ```
 
 The application will be available at http://localhost:8080

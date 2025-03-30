@@ -1,7 +1,9 @@
+version: '3.8'
+
 services:
   unraid-to-compose:
-    build: .
-    # or use image when published: image: yourusername/unraid-to-compose
+    image: registry.git.blakbox.vip/baxterblk/unraid-to-compose:latest
+    # The image needs to be built and published to this registry first
     ports:
       - "8080:5000"
     restart: unless-stopped
