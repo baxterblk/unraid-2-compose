@@ -197,7 +197,6 @@ def parse_xml_data(xml_data):
 
 def convert_xml_to_compose(xml_data):
     compose = {
-        'version': '3.8',
         'services': {}
     }
     
