@@ -241,3 +241,13 @@ This project is open source and available under the MIT License.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Screenshots
+
+Below are screenshots demonstrating the key features of the unRAID XML to Docker Compose Converter:
+
+### XML Converter Interface
+![XML Converter Interface](static/images/screenshot-01.png)
+
+### AutoKuma Labels Configuration
+![AutoKuma Labels Configuration](static/images/screenshot-02.png)
