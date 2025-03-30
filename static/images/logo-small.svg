@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="50" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="200" height="50" rx="5" ry="5" fill="#f1f1f1" />
+  
+  <!-- unRAID XML symbol (left) -->
+  <g transform="translate(40, 25) scale(0.35)">
+    <rect x="-50" y="-40" width="100" height="80" rx="5" ry="5" fill="#e9e9e9" stroke="#686868" stroke-width="2" />
+    <text x="0" y="-10" font-family="Courier New, monospace" font-size="14" text-anchor="middle" fill="#e53935">
+      &lt;unRAID&gt;
+    </text>
+    <text x="0" y="10" font-family="Courier New, monospace" font-size="12" text-anchor="middle" fill="#686868">
+      XML
+    </text>
+    <text x="0" y="30" font-family="Courier New, monospace" font-size="14" text-anchor="middle" fill="#e53935">
+      &lt;/unRAID&gt;
+    </text>
+  </g>
+  
+  <!-- Docker Compose symbol (right) -->
+  <g transform="translate(160, 25) scale(0.35)">
+    <rect x="-50" y="-40" width="100" height="80" rx="5" ry="5" fill="#e9e9e9" stroke="#1c88c7" stroke-width="2" />
+    <path d="M-25,-15 h50 v35 h-50 v-35 z" fill="#1c88c7" opacity="0.8" />
+    <rect x="-15" y="-5" width="10" height="10" fill="#f1f1f1" />
+    <rect x="5" y="-5" width="10" height="10" fill="#f1f1f1" />
+    <text x="0" y="30" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#1c88c7">
+      COMPOSE
+    </text>
+  </g>
+  
+  <!-- Conversion arrow -->
+  <g transform="translate(100, 25)">
+    <path d="M-35,0 C-20,0 -20,-10 0,-10 C20,-10 20,0 35,0" 
+          stroke="#686868" stroke-width="2" fill="none" 
+          marker-end="url(#arrowhead)" stroke-dasharray="2,1" />
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+              refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#686868" />
+      </marker>
+    </defs>
+  </g>
+  
+  <!-- AutoKuma monitor symbol -->
+  <g transform="translate(100, 10) scale(0.35)">
+    <circle cx="0" cy="0" r="25" fill="#e9e9e9" stroke="#28a745" stroke-width="2" />
+    <polyline points="-18,0 -8,0 -5,-10 0,10 5,-5 8,0 18,0" stroke="#28a745" stroke-width="2" fill="none" />
+  </g>
+</svg>

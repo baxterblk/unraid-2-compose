@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="static/images/logo.svg" alt="unRAID XML to Docker Compose Converter" width="500">
+</div>
+
 # unRAID XML to Docker Compose Converter
 
 A web-based tool to convert unRAID Docker container XML configurations to Docker Compose YAML format, with support for AutoKuma monitoring labels.

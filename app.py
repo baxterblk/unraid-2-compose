@@ -4,7 +4,7 @@ import yaml
 import re
 import json
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 def represent_str_as_yaml_str(dumper, data):
     if '\n' in data or ':' in data or '{' in data or '}' in data or '[' in data or ']' in data:
